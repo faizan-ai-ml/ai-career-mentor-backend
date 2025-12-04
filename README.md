@@ -25,6 +25,7 @@ Instead of generic career advice, our AI analyzes resumes, understands individua
 └─────────────────────┬───────────────────────────────────┘
                       │ REST API Calls
                       ▼
+
 ┌─────────────────────────────────────────────────────────┐
 │              FASTAPI BACKEND (Python)                    │
 │  ┌─────────────────────────────────────────────────┐   │
@@ -37,7 +38,14 @@ Instead of generic career advice, our AI analyzes resumes, understands individua
 │                     ▼                                    │
 │  ┌─────────────────────────────────────────────────┐   │
 │  │  Services (Business Logic)                      │   │
-│  │  • Gemini AI Service (AI Operations)            │   │
+│  │  ┌─────────────────────────────────────────┐    │   │
+│      • AI Service Layer                            │   │
+│        ┌────────────────────────────────────┐      │   │
+│        │   Primary: Gemini Pro              │      │   │
+│        │   Backup: DeepSeek (OpenRouter)    │      │   │
+│        │   Strategy: Auto-fallback          │      │   │
+│        └────────────────────────────────────┘      │   │
+      └─────────────────────────────────────────┘
 │  │  • Firebase Service (Database & Auth)           │   │
 │  │  • Resume Parser (PDF Processing)               │   │
 │  └─────────────────┬───────────────────────────────┘   │
