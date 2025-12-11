@@ -15,20 +15,25 @@ AI-powered career guidance API that analyzes resumes and generates personalized 
 
 ## Setup
 
+## Setup
+
 ### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Get Groq API Key
-1. Go to https://console.groq.com/
+### 2. Get OpenRouter API Key (FREE)
+1. Go to https://openrouter.ai/
 2. Sign up for free account
-3. Create an API key
-4. Copy the key
+3. Go to "Keys" section
+4. Create an API key
+5. Copy the key
 
 ### 3. Create `.env` file
 ```bash
-GROQ_API_KEY=your_key_here
+OPENROUTER_API_KEY=sk-or-v1-your_key_here
+OPENROUTER_MODEL=deepseek/deepseek-chat
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 ```
 
 ### 4. Run the server
@@ -37,7 +42,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### 5. Test the API
-Open browser:  http://localhost:8000/docs
+Open browser: http://localhost:8000/docs
 
 ## API Endpoints
 
