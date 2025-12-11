@@ -17,38 +17,54 @@ AI-powered career guidance API that analyzes resumes and generates personalized 
 
 ## Setup
 
+# AI Career Mentor - Backend API
+
+AI-powered career guidance with dual AI provider support (OpenRouter + Gemini backup).
+
+## Setup
+
 ### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Get OpenRouter API Key (FREE)
-1. Go to https://openrouter.ai/
-2. Sign up for free account
-3. Go to "Keys" section
-4. Create an API key
-5. Copy the key
+### 2. Get API Keys
 
-### 3. Create `.env` file
+**OpenRouter (Primary):**
+- Go to https://openrouter.ai/
+- Sign up and create API key
+
+**Gemini (Backup):**
+- Go to https://makersuite.google.com/app/apikey
+- Create free API key
+
+### 3. Configure `.env`
 ```bash
-OPENROUTER_API_KEY=sk-or-v1-your_key_here
-OPENROUTER_MODEL=deepseek/deepseek-chat
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+cp .env.example .env
+# Edit .env and add your keys
 ```
 
-### 4. Run the server
+### 4. Test configuration
+```bash
+python test_env.py
+```
+
+### 5. Run server
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 5. Test the API
-Open browser: http://localhost:8000/docs
+### 6. Test API
+http://localhost:8000/docs
 
 ## API Endpoints
 
-### `POST /analyze-resume`
-Analyzes resume text and returns career guidance.
+- `GET /` - API info
+- `GET /health` - Check AI services status
+- `POST /analyze-resume` - Analyze resume
 
+## License
+MIT
 **Request:**
 ```json
 {
