@@ -1,7 +1,7 @@
 import google.generativeai as genai
 import json
 import re
-from config import GEMINI_API_KEY, GEMINI_MODEL
+from app.config import GEMINI_API_KEY, GEMINI_MODEL
 
 def analyze_with_gemini(resume_text: str) -> dict:
     """
