@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
@@ -18,24 +19,39 @@ def create_or_update_profile(
     """
     Path B: Create or update profile manually (for students/beginners)
     """
-    # Check if profile exists
-    profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
-    
-    if not profile:
-        # Create new
-        profile = StudentProfile(
-            user_id=current_user.id,
-            **profile_data.model_dump()
+    try:
+        # Check if profile exists
+        profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
+        
+        if not profile:
+            # Create new
+            profile = StudentProfile(
+                user_id=current_user.id,
+                **profile_data.model_dump(exclude={'full_name'})
+            )
+            db.add(profile)
+        else:
+            # Update existing
+            for key, value in profile_data.model_dump(exclude_unset=True, exclude={'full_name'}).items():
+                setattr(profile, key, value)
+        
+        # Update User Full Name if provided
+        if profile_data.full_name:
+            current_user.full_name = profile_data.full_name
+            db.add(current_user)
+
+        db.commit()
+        db.refresh(profile)
+        
+        # Manually attach full_name for response
+        profile.full_name = current_user.full_name
+        return profile
+    except OperationalError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database temporarily unavailable. Please retry."
         )
-        db.add(profile)
-    else:
-        # Update existing
-        for key, value in profile_data.model_dump(exclude_unset=True).items():
-            setattr(profile, key, value)
-    
-    db.commit()
-    db.refresh(profile)
-    return profile
 
 @router.post("/upload", response_model=ResumeUploadResponse)
 async def upload_resume(
@@ -62,28 +78,65 @@ async def upload_resume(
     else:
         message = "Resume uploaded and analyzed successfully."
 
-    # 3. Update/Create Profile in DB
-    profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
+    try:
+        # 3. Update/Create Profile in DB
+        profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
+        
+        if not profile:
+            profile = StudentProfile(user_id=current_user.id)
+            db.add(profile)
+        
+        # Update resume fields
+        profile.has_resume = True
+        profile.resume_filename = file.filename
+        profile.resume_file_path = file_path
+        profile.parsed_resume_content = extracted_text
+        
+        db.commit()
+        
+        return {
+            "filename": file.filename,
+            "parsed_content_preview": extracted_text[:200] + "..." if extracted_text else "",
+            "message": message
+        }
+    except OperationalError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database temporarily unavailable. Please retry."
+        )
+
+@router.post("/upload-picture", response_model=ProfileResponse)
+async def upload_profile_picture(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Upload a profile picture (JPEG/PNG)
+    """
+    if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG images are allowed.")
     
-    if not profile:
-        profile = StudentProfile(user_id=current_user.id)
-        db.add(profile)
+    # Save file (reusing save_upload_file logic but maybe organizing better later)
+    # Ideally should be in 'uploads/avatars' but simple 'uploads' is fine for now
+    file_path = save_upload_file(file, current_user.id, sub_folder="avatars")
     
-    # Update resume fields
-    profile.has_resume = True
-    profile.resume_filename = file.filename
-    profile.resume_file_path = file_path
-    profile.parsed_resume_content = extracted_text
-    
-    # TODO (Phase 3): Use AI to extract skills/education from 'extracted_text' and populate other fields
-    
-    db.commit()
-    
-    return {
-        "filename": file.filename,
-        "parsed_content_preview": extracted_text[:200] + "..." if extracted_text else "",
-        "message": message
-    }
+    try:
+        profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
+        if not profile:
+            profile = StudentProfile(user_id=current_user.id)
+            db.add(profile)
+            
+        profile.profile_picture_url = file_path # In production this would be a public URL
+        db.commit()
+        db.refresh(profile)
+        
+        profile.full_name = current_user.full_name
+        return profile
+    except OperationalError:
+        db.rollback()
+        raise HTTPException(status_code=503, detail="Database unavailable")
 
 @router.get("/me", response_model=ProfileResponse)
 def get_my_profile(
@@ -91,10 +144,16 @@ def get_my_profile(
     current_user: User = Depends(get_current_user)
 ):
     """Get current user's profile"""
-    profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found. Please create one.")
-    
-    # Attach user's full name to response
-    profile.full_name = current_user.full_name
-    return profile
+    try:
+        profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found. Please create one.")
+        
+        # Attach user's full name to response
+        profile.full_name = current_user.full_name
+        return profile
+    except OperationalError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database temporarily unavailable. Please retry."
+        )

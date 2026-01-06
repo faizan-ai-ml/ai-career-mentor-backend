@@ -3,28 +3,35 @@ import shutil
 import pdfplumber
 import docx
 from fastapi import UploadFile, HTTPException
+from datetime import datetime
 
 UPLOAD_DIR = "uploads/resumes"
 
-def save_upload_file(upload_file: UploadFile, user_id: int) -> str:
+def save_upload_file(upload_file: UploadFile, user_id: int, sub_folder: str = "") -> str:
     """
-    Saves the uploaded file to uploads/resumes/{user_id}/filename
-    Returns the absolute file path.
+    Save uploaded file to disk and return the path
+    User ID used to create unique filename prefix
     """
     try:
-        # Create user specific directory
-        user_dir = os.path.join(UPLOAD_DIR, str(user_id))
-        os.makedirs(user_dir, exist_ok=True)
+        # Create uploads directory if it doesn't exist
+        base_dir = "uploads"
+        if sub_folder:
+            base_dir = os.path.join(base_dir, sub_folder)
+            
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
+            
+        # Create unique filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{user_id}_{timestamp}_{upload_file.filename}"
+        file_path = os.path.join(base_dir, filename)
         
-        # Define file path
-        file_path = os.path.join(user_dir, upload_file.filename)
-        
-        # Save file
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(upload_file.file, buffer)
             
         return file_path
     except Exception as e:
+        print(f"Error saving file: {e}")
         raise HTTPException(status_code=500, detail=f"Could not save file: {str(e)}")
 
 def extract_text_from_pdf(file_path: str) -> str:

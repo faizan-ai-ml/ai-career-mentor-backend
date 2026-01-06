@@ -38,6 +38,21 @@ def generate_learning_roadmap(profile_data: dict, duration_weeks: int = 8) -> di
         return generate_roadmap_impl(profile_data, duration_weeks)
     return {"message": "AI service unavailable"}
 
+def chat_with_mentor(message: str, history: list, user_context: dict) -> str:
+    """
+    Chat with the AI Mentor.
+    """
+    if GEMINI_AVAILABLE:
+        from app.services.gemini_service import chat_with_gemini
+        return chat_with_gemini(message, history, user_context)
+    
+    # Fallback/Primary to OpenRouter if Gemini not preferred (but here we prefer Gemini for chat due to context window)
+    if OPENROUTER_AVAILABLE:
+         # TODO: Implement OpenRouter Chat if needed
+         return "I'm sorry, I can only chat via Gemini right now."
+         
+    return "AI Service Unavailable"
+
 def get_career_counseling(answers: dict) -> dict:
     if OPENROUTER_AVAILABLE:
         return get_career_counseling_impl(answers)

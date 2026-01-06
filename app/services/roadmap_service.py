@@ -14,26 +14,29 @@ def generate_roadmap_impl(profile_data: dict, duration_weeks: int = 8) -> dict:
         if profile_data.get('resume_content'):
              resume_context = f"\nRESUME CONTEXT:\n{profile_data['resume_content'][:2000]}...\n(Tailor the roadmap level based on these existing skills)"
 
-        prompt = f"""Create a highly detailed {duration_weeks}-week learning roadmap for a "{profile_data.get('careerGoals', 'Tech Professional')}".
-Profile: {json.dumps(profile_data)}
+        prompt = f"""Create a highly detailed {duration_weeks}-week learning roadmap aimed at achieving the following target goal: "{profile_data.get('careerGoals', 'the user-defined field')}".
+
+USER PROFILE DATA: 
+{json.dumps(profile_data)}
 {resume_context}
 
 REQUIREMENTS:
-1. Career Goal: Be specific (derive from Resume if unclear).
+1. Career Goal: Identify the specific role and industry based STRICTLY on the user's provided skills and interests (e.g., if they mentioned 'knife skills' and 'cooking', they are in the Culinary field).
 2. For EACH WEEK ({duration_weeks} total), provide:
-   - Topic: Main theme.
-   - Tasks: 3 actionable steps.
-   - Resources: 2 SPECIFIC, CLICKABLE-STYLE titles (e.g. "Course: 'Name' on Platform").
+   - Topic: Main theme relevant to THEIR field.
+   - Tasks: 3 actionable steps (e.g., practice a craft, master a specific tool, study a domain concept).
+   - Resources: 2 SPECIFIC learning resources (titles or clickable-style search queries).
+3. Do NOT assume the user is in the tech/computer field unless their data explicitly says so.
 
 OUTPUT JSON:
 {{
-    "career_goal": "Target Role",
+    "career_goal": "The Specific Role Identified",
     "weeks": [
         {{
             "week": 1, 
-            "topic": "Topic Name", 
-            "tasks": ["Task 1", "Task 2"],
-            "resources": ["Resource 1", "Resource 2"]
+            "topic": "Topic relevant to THEIR specific field", 
+            "tasks": ["Actionable step 1", "Actionable step 2", "Actionable step 3"],
+            "resources": ["Specific Resource 1", "Specific Resource 2"]
         }}
     ]
 }}

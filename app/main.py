@@ -7,10 +7,13 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.orm import Session
 
-# Import routers
+# Import routers and auth dependencies
 from app.api.auth import router as auth_router
 from app.api.profile import router as profile_router
 from app.api.ai_features import router as ai_router
+from app.api.analytics import router as analytics_router
+from app.dependencies import get_current_user
+from app.models.user import User
 
 # Import existing services
 from app.services.ai_service import analyze_resume
@@ -18,12 +21,6 @@ from app.config import get_config_status
 
 # Import database
 from app.database import engine, Base, get_db
-from app.dependencies import get_current_user
-from app.models.user import User
-from app.models.analytics import UserEvent
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 # Initialize FastAPI
 app = FastAPI(
@@ -47,6 +44,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(ai_router)
+app.include_router(analytics_router)
 
 
 # ===== AI Analysis Models (from original code) =====

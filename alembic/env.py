@@ -19,6 +19,7 @@ load_dotenv()
 from app.database import Base
 from app.models.user import User  # Import all models here
 from app.models.profile import StudentProfile
+from app.models.analytics import UserEvent
 
 # this is the Alembic Config object
 config = context.config

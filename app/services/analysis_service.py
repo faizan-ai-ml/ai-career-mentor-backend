@@ -43,33 +43,35 @@ def analyze_resume_impl(resume_text: str) -> dict:
         return create_fallback_response(resume_text)
 
 def create_analysis_prompt(resume_text: str) -> str:
-    return f"""You are an expert career counselor. Analyze this resume and provide detailed career guidance.
+    return f"""You are an expert career counselor. Analyze this resume/profile text and provide detailed career guidance that is STRICTLY based on the user's provided skills and interests.
 
-RESUME TEXT: 
+RESUME/PROFILE TEXT: 
 {resume_text}
 
 YOUR TASK:
-1. Extract ALL technical and soft skills mentioned
-2. Determine experience level (Beginner/Intermediate/Advanced)
-3. RATE the resume (0-100) based on clarity and impact.
-4. Identify KEY MISSING skills for the top career match.
-5. Recommend top 2-3 career paths with match percentages
-6. Create a BRIEF summary of next steps
+1. Extract ALL skills (technical, vocational, soft, or domain-specific) mentioned.
+2. Determine experience level (Beginner/Intermediate/Advanced) based on the context of their specific field.
+3. RATE the profile (0-100) based on clarity and evidence of expertise in their chosen area.
+4. Identify KEY MISSING skills that the user needs to progress or excel in their specific field of interest.
+5. Recommend 2-3 career paths that ACCURATELY reflect the user's field. 
+   - DO NOT map unrelated careers (e.g., if they are a chef, don't suggest web development).
+   - If they are in a non-technical field (e.g., chef, craftsmen, artist), suggest careers strictly within that domain.
+6. Create a BRIEF summary of next steps tailored to their specific industry.
 
 OUTPUT FORMAT (strict JSON):
 {{
   "skills": ["skill1", "skill2", "skill3"],
   "score": 85,
-  "missing_skills": ["Docker", "Kubernetes"],
+  "missing_skills": ["Specific Field Skill 1", "Specific Field Skill 2"],
   "experience_level": "Beginner/Intermediate/Advanced",
   "top_careers": [
-    {{"title": "Career Title 1", "match_percent": 85}},
-    {{"title": "Career Title 2", "match_percent": 75}}
+    {{"title": "Role matching their skills", "match_percent": 85}},
+    {{"title": "Specialized role in their field", "match_percent": 75}}
   ],
-  "roadmap": "Based on your resume, focus on [Skill 1] and [Skill 2]. Consider building projects in [Area]."
+  "roadmap": "Focus on mastering [Specific Skill] and gaining experience in [Specific Area]. Consider [Industry-specific recommendation]."
 }}
 
-IMPORTANT: Return ONLY valid JSON, no extra text."""
+IMPORTANT: Return ONLY valid JSON. Be field-agnostic and honor the user's unique background."""
 
 def parse_ai_response(raw_content: str, resume_text: str) -> dict:
     try:
